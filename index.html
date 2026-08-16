@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano Financeiro Pessoal</title>
+    
+    <!-- Meta tags PWA -->
+    <meta name="theme-color" content="#7E57C2">
+    <meta name="description" content="Controle suas finanças de forma simples e eficiente">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Ícones PWA -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    
+    <style>
+        :root {
+            --primary: #7E57C2;
+            --secondary: #26A69A;
+            --accent: #FF4081;
+            --light: #F5F5F5;
+            --dark: #333333;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --text-light: #718096;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .install-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .install-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .month-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background: var(--light);
+        }
+        
+        select {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-weight: bold;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 15px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--primary);
+        }
+        
+        .card h3 {
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        
+        .card-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .card.reservas { border-top-color: var(--success); }
+        .card.gastos { border-top-color: var(--warning); }
+        .card.sobras { border-top-color: var(--accent); }
+        
+        .card.reservas .card-value { color: var(--success); }
+        .card.gastos .card-value { color: var(--warning); }
+        .card.sobras .card-value { color: var(--accent); }
+        
+        /* ABA DE NAVEGAÇÃO */
+        .tabs-container {
+            background: white;
+            margin: 0 15px 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            width: 100%;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px 5px;
+            border: none;
+            background: #f8f9fa;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #718096;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* CONTEÚDO DAS ABAS */
+        .tab-content {
+            display: none;
+            padding: 15px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* GRID DE GASTOS - LADO A LADO NO MOBILE TAMBÉM */
+        .expenses-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 0;
+        }
+        
+        .expense-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .expense-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2d3748;
+            line-height: 1.2;
+            flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
+            cursor: text;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .expense-name:hover {
+            background: #f0f0f0;
+        }
+        
+        .expense-name:focus {
+            background: #e8e0f5;
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        
+        .expense-input {
+            width: 100px;
+            min-width: 80px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-align: right;
+            background: #f7fafc;
+            direction: rtl;
+            flex-shrink: 0;
+        }
+        
+        .expense-input:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+        }
+        
+        /* GRID DE INVESTIMENTOS */
+        .investments-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 0;
+        }
+        
+        .investment-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .card-reserva { border-left-color: #4299e1; }
+        .card-etfs { border-left-color: #48bb78; }
+        .card-sonhos { border-left-color: #ed8936; }
+        .card-total { border-left-color: #9f7aea; }
+        
+        .investment-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+            line-height: 1.2;
+        }
+        
+        .investment-input {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-align: right;
+            margin-bottom: 5px;
+            background: #f7fafc;
+            direction: rtl;
+        }
+        
+        .investment-input:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+        }
+        
+        .investment-suggestion {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            line-height: 1.2;
+        }
+        
+        /* NOVA ABA - MINHAS METAS */
+        .metas-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 0;
+        }
+        
+        .meta-line {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .meta-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .meta-card.reserva { border-left-color: #4299e1; }
+        .meta-card.planos { border-left-color: #48bb78; }
+        .meta-card.sonhos { border-left-color: #ed8936; }
+        
+        .meta-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+            line-height: 1.2;
+        }
+        
+        .meta-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 5px 0;
+        }
+        
+        .meta-input {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-align: right;
+            background: #f7fafc;
+            direction: rtl;
+        }
+        
+        .meta-input:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+        }
+        
+        .progress-container {
+            margin-top: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--success);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        /* ENTRADAS ESPECIAIS */
+        .special-incomes {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .special-income-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .special-income-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .special-income-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .special-income-input {
+            width: 120px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: right;
+            background: #f7fafc;
+            direction: rtl;
+        }
+        
+        /* PAGAMENTOS POR DATA */
+        .payment-dates {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .payment-date-section {
+            margin-bottom: 15px;
+        }
+        
+        .payment-date-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .payment-input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .payment-label {
+            font-size: 0.75rem;
+            color: #4a5568;
+        }
+        
+        .payment-input {
+            width: 120px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: right;
+            background: #f7fafc;
+            direction: rtl;
+        }
+        
+        /* TOTAIS */
+        .totals-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .total-row:last-child {
+            border-bottom: none;
+        }
+        
+        .total-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .total-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        
+        .total-investido { color: var(--success); }
+        .total-gastos { color: var(--warning); }
+        .total-sobras { color: var(--accent); }
+        
+        /* FOLHA DE ROSTO */
+        .folha-rosto {
+            background: linear-gradient(135deg, #f8f4ff 0%, #ede7f6 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 0 15px 15px;
+            border: 2px solid var(--primary);
+        }
+        
+        .folha-rosto h2 {
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .folha-rosto-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(126, 87, 194, 0.2);
+        }
+        
+        .folha-rosto-item:last-child {
+            border-bottom: none;
+        }
+        
+        .folha-rosto-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .folha-rosto-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .folha-rosto-total {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+        }
+        
+        .folha-rosto-total .folha-rosto-label {
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        
+        .folha-rosto-total .folha-rosto-value {
+            font-size: 1.1rem;
+            color: var(--success);
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--light);
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+        }
+        
+        #saveBtn {
+            background: var(--success);
+            color: white;
+        }
+        
+        #clearBtn {
+            background: var(--danger);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 8px rgba(0,0,0,0.3);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--success);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform: translateX(150%);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .offline-message {
+            background: var(--warning);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        /* MOBILE - Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 10px;
+            }
+            
+            .card h3 {
+                font-size: 0.7rem;
+            }
+            
+            .card-value {
+                font-size: 1rem;
+            }
+            
+            .expenses-grid,
+            .investments-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .expense-card {
+                padding: 8px;
+                min-height: 70px;
+                flex-wrap: wrap;
+            }
+            
+            .expense-name {
+                font-size: 0.7rem;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .expense-input {
+                width: 100%;
+                font-size: 0.8rem;
+            }
+            
+            .investment-card {
+                padding: 8px;
+                min-height: 90px;
+            }
+            
+            .investment-title {
+                font-size: 0.7rem;
+            }
+            
+            .investment-input {
+                padding: 8px;
+                font-size: 0.8rem;
+            }
+            
+            .meta-line {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            
+            .meta-card {
+                padding: 10px;
+                min-height: 90px;
+            }
+            
+            .meta-title {
+                font-size: 0.7rem;
+            }
+            
+            .meta-value {
+                font-size: 1rem;
+            }
+            
+            .meta-input {
+                padding: 8px;
+                font-size: 0.8rem;
+            }
+            
+            .tab {
+                padding: 12px 3px;
+                font-size: 0.7rem;
+            }
+            
+            .folha-rosto {
+                padding: 15px;
+            }
+            
+            .folha-rosto-item {
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                text-align: center;
+            }
+        }
+        
+        /* Estilo para quando estiver em modo standalone (instalado) */
+        @media all and (display-mode: standalone) {
+            body {
+                padding: 10px;
+            }
+            
+            .install-btn {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-message" id="offlineMessage">
+        ⚠️ Você está offline, mas pode continuar usando o aplicativo
+    </div>
+    
+    <div class="container">
+        <header>
+            <button class="install-btn" id="installBtn" style="display: none;">📱 Instalar App</button>
+            <h1>Planer Tininha & Dinho</h1>
+            <div class="subtitle">Controle suas finanças de forma simples e eficiente</div>
+        </header>
+        
+        <div class="month-selector">
+            <select id="monthSelect">
+                <option value="0">Janeiro</option>
+                <option value="1">Fevereiro</option>
+                <option value="2">Março</option>
+                <option value="3">Abril</option>
+                <option value="4">Maio</option>
+                <option value="5">Junho</option>
+                <option value="6">Julho</option>
+                <option value="7">Agosto</option>
+                <option value="8">Setembro</option>
+                <option value="9">Outubro</option>
+                <option value="10">Novembro</option>
+                <option value="11">Dezembro</option>
+            </select>
+            <select id="yearSelect">
+                <!-- Os anos serão preenchidos via JavaScript -->
+            </select>
+        </div>
+        
+        <div class="summary-cards">
+            <div class="card ganhos">
+                <h3>GANHOS</h3>
+                <div class="card-value" id="totalGanhos">R$ 0,00</div>
+            </div>
+            <div class="card reservas">
+                <h3>RESERVAS / INVESTIMENTOS</h3>
+                <div class="card-value" id="totalReservas">R$ 0,00</div>
+            </div>
+            <div class="card gastos">
+                <h3>GASTOS</h3>
+                <div class="card-value" id="totalGastos">R$ 0,00</div>
+            </div>
+            <div class="card sobras">
+                <h3>SOBRAS</h3>
+                <div class="card-value" id="totalSobras">R$ 0,00</div>
+            </div>
+        </div>
+        
+        <!-- ABA DE NAVEGAÇÃO -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active" onclick="mudarAba('investir')">🎯 Investir</button>
+                <button class="tab" onclick="mudarAba('metas')">🎯 Metas</button>
+                <button class="tab" onclick="mudarAba('gastos')">💸 Gastos</button>
+                <button class="tab" onclick="mudarAba('entradas')">💰 Entradas</button>
+                <button class="tab" onclick="mudarAba('resumo')">📊 Resumo</button>
+            </div>
+        </div>
+        
+        <!-- ABA INVESTIR -->
+        <div id="aba-investir" class="tab-content active">
+            <div class="investments-grid">
+                <div class="investment-card card-reserva">
+                    <div class="investment-title">🛡️ Reserva Emergência</div>
+                    <input type="text" id="valor-reserva" class="investment-input" value="0,00" oninput="calcularTotais()">
+                    <div class="investment-suggestion">Sugestão: 20% (R$ <span id="sugestao-reserva">0,00</span>)</div>
+                </div>
+                
+                <div class="investment-card card-etfs">
+                    <div class="investment-title">📈 ETFs & Futuro</div>
+                    <input type="text" id="valor-etfs" class="investment-input" value="0,00" oninput="calcularTotais()">
+                    <div class="investment-suggestion">Sugestão: 15% (R$ <span id="sugestao-etfs">0,00</span>)</div>
+                </div>
+                
+                <div class="investment-card card-sonhos">
+                    <div class="investment-title">🌟 Meus Sonhos</div>
+                    <input type="text" id="valor-sonhos" class="investment-input" value="0,00" oninput="calcularTotais()">
+                    <div class="investment-suggestion">Sugestão: 15% (R$ <span id="sugestao-sonhos">0,00</span>)</div>
+                </div>
+                
+                <div class="investment-card card-total">
+                    <div class="investment-title">💎 Total Investido</div>
+                    <div class="card-value" id="valor-total-investido">R$ 0,00</div>
+                    <div class="investment-suggestion">50% do salário destinado ao futuro</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ABA MINHAS METAS -->
+        <div id="aba-metas" class="tab-content">
+            <div class="metas-grid">
+                <!-- 1ª LINHA - RESERVA DE EMERGÊNCIA -->
+                <div class="meta-line">
+                    <div class="meta-card reserva">
+                        <div class="meta-title">🛡️ Reserva de Emergência</div>
+                        <div class="meta-value" id="total-reserva-acumulado">R$ 0,00</div>
+                        <div class="progress-text">Total Acumulado</div>
+                    </div>
+                    <div class="meta-card reserva">
+                        <div class="meta-title">🎯 Meta Reserva</div>
+                        <input type="text" id="meta-reserva" class="meta-input" value="0,00" oninput="calcularProgressoMetas()">
+                        <div class="progress-text">Valor Desejado</div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progresso-reserva" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="texto-progresso-reserva">0% alcançado</div>
+                
+                <!-- 2ª LINHA - PLANOS FUTUROS -->
+                <div class="meta-line">
+                    <div class="meta-card planos">
+                        <div class="meta-title">📈 Planos Futuros</div>
+                        <div class="meta-value" id="total-planos-acumulado">R$ 0,00</div>
+                        <div class="progress-text">Total Acumulado</div>
+                    </div>
+                    <div class="meta-card planos">
+                        <div class="meta-title">🎯 Meta Planos</div>
+                        <input type="text" id="meta-planos" class="meta-input" value="0,00" oninput="calcularProgressoMetas()">
+                        <div class="progress-text">Valor Desejado</div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progresso-planos" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="texto-progresso-planos">0% alcançado</div>
+                
+                <!-- 3ª LINHA - MEUS SONHOS -->
+                <div class="meta-line">
+                    <div class="meta-card sonhos">
+                        <div class="meta-title">🌟 Meus Sonhos</div>
+                        <div class="meta-value" id="total-sonhos-acumulado">R$ 0,00</div>
+                        <div class="progress-text">Total Acumulado</div>
+                    </div>
+                    <div class="meta-card sonhos">
+                        <div class="meta-title">🎯 Meta Sonhos</div>
+                        <input type="text" id="meta-sonhos" class="meta-input" value="0,00" oninput="calcularProgressoMetas()">
+                        <div class="progress-text">Valor Desejado</div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progresso-sonhos" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="texto-progresso-sonhos">0% alcançado</div>
+            </div>
+        </div>
+        
+        <!-- ABA GASTOS -->
+        <div id="aba-gastos" class="tab-content">
+            <div class="expenses-grid" id="expensesGrid">
+                <!-- Os gastos serão gerados via JavaScript -->
+            </div>
+        </div>
+        
+        <!-- ABA ENTRADAS -->
+        <div id="aba-entradas" class="tab-content">
+            <!-- PAGAMENTOS POR DATA -->
+            <div class="payment-dates">
+                <div class="payment-date-section">
+                    <div class="payment-date-title">DIA 5 - PAGAMENTO</div>
+                    <div class="payment-input-row">
+                        <span class="payment-label">Salário Principal</span>
+                        <input type="text" id="pagamento-dia5" class="payment-input" value="0,00" oninput="calcularSugestoes()">
+                    </div>
+                </div>
+                
+                <div class="payment-date-section">
+                    <div class="payment-date-title">DIA 20 - VALE</div>
+                    <div class="payment-input-row">
+                        <span class="payment-label">Vale Alimentação/Refeição</span>
+                        <input type="text" id="vale-dia20" class="payment-input" value="0,00" oninput="calcularSugestoes()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ENTRADAS ESPECIAIS -->
+            <div class="special-incomes">
+                <div class="special-income-row" id="decimo-terceiro-1">
+                    <span class="special-income-label">1ª Parcela 13º Salário</span>
+                    <input type="text" id="decimo1" class="special-income-input" value="0,00" oninput="calcularTotais()">
+                </div>
+                
+                <div class="special-income-row" id="decimo-terceiro-2">
+                    <span class="special-income-label">2ª Parcela 13º Salário</span>
+                    <input type="text" id="decimo2" class="special-income-input" value="0,00" oninput="calcularTotais()">
+                </div>
+                
+                <div class="special-income-row" id="ferias">
+                    <span class="special-income-label">Pgto Férias</span>
+                    <input type="text" id="ferias" class="special-income-input" value="0,00" oninput="calcularTotais()">
+                </div>
+                
+                <div class="special-income-row">
+                    <span class="special-income-label">Comissões</span>
+                    <input type="text" id="comissoes" class="special-income-input" value="0,00" oninput="calcularTotais()">
+                </div>
+                
+                <div class="special-income-row">
+                    <span class="special-income-label">Outras Entradas</span>
+                    <input type="text" id="outras-entradas" class="special-income-input" value="0,00" oninput="calcularTotais()">
+                </div>
+            </div>
+        </div>
+        
+        <!-- ABA RESUMO (FOLHA DE ROSTO) -->
+        <div id="aba-resumo" class="tab-content">
+            <div class="folha-rosto" id="folhaRosto">
+                <h2>📊 RESUMO ANUAL DE INVESTIMENTOS</h2>
+                <div id="resumoInvestimentos">
+                    <!-- Gerado via JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- TOTAIS -->
+        <div class="totals-section">
+            <div class="total-row">
+                <span class="total-label">TOTAL INVESTIDO NO MÊS</span>
+                <span id="total-investido-mes" class="total-value total-investido">R$ 0,00</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">TOTAL DE GASTOS</span>
+                <span id="total-gastos-mes" class="total-value total-gastos">R$ 0,00</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">SOBRAS DO MÊS</span>
+                <span id="sobras-mes" class="total-value total-sobras">R$ 0,00</span>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button id="saveBtn">SALVAR</button>
+            <button id="clearBtn">LIMPAR MÊS</button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Dados salvos com sucesso!</div>
+
+    <script>
+        // ========== CÓDIGO DO SERVIÇO PWA ==========
+        
+        // Registrar Service Worker para funcionalidade offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registrado com sucesso: ', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Falha ao registrar ServiceWorker: ', error);
+                    });
+            });
+        }
+        
+        // Detectar status da conexão
+        window.addEventListener('online', function() {
+            document.getElementById('offlineMessage').style.display = 'none';
+        });
+        
+        window.addEventListener('offline', function() {
+            document.getElementById('offlineMessage').style.display = 'block';
+        });
+        
+        // Verificar se está offline no carregamento
+        if (!navigator.onLine) {
+            document.getElementById('offlineMessage').style.display = 'block';
+        }
+        
+        // ========== INSTALAÇÃO DO PWA ==========
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+            
+            installBtn.addEventListener('click', () => {
+                installBtn.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou a instalação');
+                        mostrarToast('Aplicativo instalado com sucesso!');
+                    } else {
+                        console.log('Usuário recusou a instalação');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+        
+        // ========== CÓDIGO DO SISTEMA FINANCEIRO ==========
+        
+        // Lista de gastos com nomes padrão
+        const GASTOS_PADRAO = [
+            'Moradia (IPTU / Aluguéis / Outros)',
+            'Contas (Luz, Água, Internet)',
+            'Contas (Serviços Nuvem / Celular)',
+            'Contas Fixas (cartão crédito / outros)',
+            'Saídas (Baladas, Cinema, etc.)',
+            'Transporte (Uber, Ônibus)',
+            'Alimentação (Refeições / Rest. / Pizza)',
+            'Cuidados Pessoais e Beleza',
+            'Compras (Shopping, Roupas)',
+            'Presentes (Aniversário / Natal / etc)',
+            'Gastos Variados 1',
+            'Gastos Variados 2',
+            'Gastos Variados 3',
+            'Gastos Variados 4',
+            'Gastos Variados 5',
+            'Gastos Variados 6',
+            'Gastos Variados 7',
+            'Gastos Variados 8',
+            'Gastos Variados 9',
+            'Gastos Variados 10'
+        ];
+        
+        let dadosFinanceiros = JSON.parse(localStorage.getItem('isaMoneyDados')) || {};
+        let metasFinanceiras = JSON.parse(localStorage.getItem('isaMoneyMetas')) || {};
+        let nomesGastos = JSON.parse(localStorage.getItem('isaMoneyNomesGastos')) || {};
+
+        // Elementos do DOM
+        const monthSelect = document.getElementById('monthSelect');
+        const yearSelect = document.getElementById('yearSelect');
+        const saveBtn = document.getElementById('saveBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const notification = document.getElementById('notification');
+        const expensesGrid = document.getElementById('expensesGrid');
+        
+        // Totais principais
+        const totalGanhosEl = document.getElementById('totalGanhos');
+        const totalReservasEl = document.getElementById('totalReservas');
+        const totalGastosEl = document.getElementById('totalGastos');
+        const totalSobrasEl = document.getElementById('totalSobras');
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeYears();
+            gerarCamposGastos();
+            setupEventListeners();
+            updateVisibility();
+            carregarDados();
+            carregarMetas();
+            calcularAcumuladoAnual();
+            atualizarResumo();
+        });
+        
+        // Configurar anos no seletor
+        function initializeYears() {
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                if (i === currentYear) option.selected = true;
+                yearSelect.appendChild(option);
+            }
+        }
+        
+        // Gerar campos de gastos
+        function gerarCamposGastos() {
+            expensesGrid.innerHTML = '';
+            const chaveNomes = `${yearSelect.value}-${String(parseInt(monthSelect.value) + 1).padStart(2, '0')}`;
+            const nomesDoMes = nomesGastos[chaveNomes] || GASTOS_PADRAO;
+            
+            GASTOS_PADRAO.forEach((nomePadrao, index) => {
+                const card = document.createElement('div');
+                card.className = 'expense-card';
+                
+                const nome = document.createElement('span');
+                nome.className = 'expense-name';
+                nome.contentEditable = true;
+                nome.textContent = nomesDoMes[index] || nomePadrao;
+                nome.dataset.index = index;
+                nome.addEventListener('blur', function() {
+                    salvarNomesGastos();
+                });
+                nome.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.blur();
+                    }
+                });
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `gasto-${index}`;
+                input.className = 'expense-input';
+                input.value = '0,00';
+                input.setAttribute('oninput', 'calcularTotais()');
+                
+                card.appendChild(nome);
+                card.appendChild(input);
+                expensesGrid.appendChild(card);
+            });
+        }
+        
+        // Salvar nomes personalizados dos gastos
+        function salvarNomesGastos() {
+            const chaveMes = `${yearSelect.value}-${String(parseInt(monthSelect.value) + 1).padStart(2, '0')}`;
+            const nomes = [];
+            document.querySelectorAll('.expense-name').forEach(el => {
+                nomes.push(el.textContent.trim());
+            });
+            nomesGastos[chaveMes] = nomes;
+            localStorage.setItem('isaMoneyNomesGastos', JSON.stringify(nomesGastos));
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Formatação automática de moeda
+            document.querySelectorAll('input[type="text"]').forEach(input => {
+                input.addEventListener('input', formatarInputMoeda);
+            });
+            
+            // Alteração de mês/ano - ZERAR TUDO AO TROCAR
+            monthSelect.addEventListener('change', function() {
+                zerarTudo();
+                updateVisibility();
+                carregarDados();
+                calcularAcumuladoAnual();
+                atualizarResumo();
+            });
+            
+            yearSelect.addEventListener('change', function() {
+                zerarTudo();
+                carregarDados();
+                calcularAcumuladoAnual();
+                atualizarResumo();
+            });
+            
+            // Botões
+            saveBtn.addEventListener('click', salvarDados);
+            clearBtn.addEventListener('click', limparMes);
+        }
+        
+        // ZERAR TODOS OS CAMPOS AO TROCAR DE MÊS
+        function zerarTudo() {
+            // Zerar todos os inputs
+            document.querySelectorAll('input[type="text"]').forEach(input => {
+                // Não zerar as metas
+                if (!input.id.startsWith('meta-')) {
+                    input.value = '0,00';
+                }
+            });
+            
+            // Atualizar sugestões e totais
+            calcularSugestoes();
+            calcularTotais();
+            
+            // Recarregar dados do mês selecionado
+            carregarDados();
+        }
+        
+        // ===== FUNÇÕES PRINCIPAIS =====
+        
+        function mudarAba(nomeAba) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(aba => {
+                aba.classList.remove('active');
+            });
+            
+            // Remover active de todas as tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar aba selecionada
+            document.getElementById('aba-' + nomeAba).classList.add('active');
+            
+            // Ativar tab clicada
+            event.target.classList.add('active');
+            
+            // Atualizar resumo se for a aba de resumo
+            if (nomeAba === 'resumo') {
+                atualizarResumo();
+            }
+        }
+        
+        // NOVA FUNÇÃO: Calcular acumulado anual para as metas
+        function calcularAcumuladoAnual() {
+            const anoAtual = yearSelect.value;
+            let totalReserva = 0;
+            let totalPlanos = 0;
+            let totalSonhos = 0;
+            
+            // Somar todos os meses do ano atual
+            for (let mes = 0; mes < 12; mes++) {
+                const chaveMes = `${anoAtual}-${String(mes + 1).padStart(2, '0')}`;
+                const dadosMes = dadosFinanceiros[chaveMes];
+                
+                if (dadosMes) {
+                    totalReserva += parseCurrency(dadosMes['valor-reserva'] || '0,00');
+                    totalPlanos += parseCurrency(dadosMes['valor-etfs'] || '0,00');
+                    totalSonhos += parseCurrency(dadosMes['valor-sonhos'] || '0,00');
+                }
+            }
+            
+            // Atualizar displays
+            document.getElementById('total-reserva-acumulado').textContent = formatarMoeda(totalReserva);
+            document.getElementById('total-planos-acumulado').textContent = formatarMoeda(totalPlanos);
+            document.getElementById('total-sonhos-acumulado').textContent = formatarMoeda(totalSonhos);
+            
+            // Calcular progresso
+            calcularProgressoMetas();
+        }
+        
+        // NOVA FUNÇÃO: Calcular progresso das metas
+        function calcularProgressoMetas() {
+            const metaReserva = parseCurrency(document.getElementById('meta-reserva').value) || 0;
+            const metaPlanos = parseCurrency(document.getElementById('meta-planos').value) || 0;
+            const metaSonhos = parseCurrency(document.getElementById('meta-sonhos').value) || 0;
+            
+            const acumuladoReserva = parseCurrency(document.getElementById('total-reserva-acumulado').textContent) || 0;
+            const acumuladoPlanos = parseCurrency(document.getElementById('total-planos-acumulado').textContent) || 0;
+            const acumuladoSonhos = parseCurrency(document.getElementById('total-sonhos-acumulado').textContent) || 0;
+            
+            // Calcular porcentagens
+            const progressoReserva = metaReserva > 0 ? Math.min((acumuladoReserva / metaReserva) * 100, 100) : 0;
+            const progressoPlanos = metaPlanos > 0 ? Math.min((acumuladoPlanos / metaPlanos) * 100, 100) : 0;
+            const progressoSonhos = metaSonhos > 0 ? Math.min((acumuladoSonhos / metaSonhos) * 100, 100) : 0;
+            
+            // Atualizar barras de progresso
+            document.getElementById('progresso-reserva').style.width = progressoReserva + '%';
+            document.getElementById('progresso-planos').style.width = progressoPlanos + '%';
+            document.getElementById('progresso-sonhos').style.width = progressoSonhos + '%';
+            
+            // Atualizar textos de progresso
+            document.getElementById('texto-progresso-reserva').textContent = progressoReserva.toFixed(1) + '% alcançado';
+            document.getElementById('texto-progresso-planos').textContent = progressoPlanos.toFixed(1) + '% alcançado';
+            document.getElementById('texto-progresso-sonhos').textContent = progressoSonhos.toFixed(1) + '% alcançado';
+            
+            // Salvar metas
+            salvarMetas();
+        }
+        
+        function calcularSugestoes() {
+            const pagamentoDia5 = parseCurrency(document.getElementById('pagamento-dia5').value) || 0;
+            const valeDia20 = parseCurrency(document.getElementById('vale-dia20').value) || 0;
+            const comissoes = parseCurrency(document.getElementById('comissoes').value) || 0;
+            const outrasEntradas = parseCurrency(document.getElementById('outras-entradas').value) || 0;
+            const decimo1 = parseCurrency(document.getElementById('decimo1').value) || 0;
+            const decimo2 = parseCurrency(document.getElementById('decimo2').value) || 0;
+            const feriasPgto = parseCurrency(document.getElementById('ferias').value) || 0;
+            
+            const totalEntradas = pagamentoDia5 + valeDia20 + comissoes + outrasEntradas + decimo1 + decimo2 + feriasPgto;
+            
+            // Calcular sugestões baseadas no total de entradas
+            const sugestaoReserva = totalEntradas * 0.20;
+            const sugestaoETFs = totalEntradas * 0.15;
+            const sugestaoSonhos = totalEntradas * 0.15;
+            
+            document.getElementById('sugestao-reserva').textContent = formatarMoeda(sugestaoReserva);
+            document.getElementById('sugestao-etfs').textContent = formatarMoeda(sugestaoETFs);
+            document.getElementById('sugestao-sonhos').textContent = formatarMoeda(sugestaoSonhos);
+            
+            calcularTotais();
+        }
+        
+        function calcularTotais() {
+            // Calcular totais de entradas
+            const pagamentoDia5 = parseCurrency(document.getElementById('pagamento-dia5').value) || 0;
+            const valeDia20 = parseCurrency(document.getElementById('vale-dia20').value) || 0;
+            const comissoes = parseCurrency(document.getElementById('comissoes').value) || 0;
+            const outrasEntradas = parseCurrency(document.getElementById('outras-entradas').value) || 0;
+            const decimo1 = parseCurrency(document.getElementById('decimo1').value) || 0;
+            const decimo2 = parseCurrency(document.getElementById('decimo2').value) || 0;
+            const feriasPgto = parseCurrency(document.getElementById('ferias').value) || 0;
+            
+            const totalGanhos = pagamentoDia5 + valeDia20 + comissoes + outrasEntradas + decimo1 + decimo2 + feriasPgto;
+            
+            // Calcular totais de investimentos
+            const reserva = parseCurrency(document.getElementById('valor-reserva').value) || 0;
+            const etfs = parseCurrency(document.getElementById('valor-etfs').value) || 0;
+            const sonhos = parseCurrency(document.getElementById('valor-sonhos').value) || 0;
+            const totalInvestido = reserva + etfs + sonhos;
+            
+            // Calcular totais de gastos
+            let totalGastos = 0;
+            document.querySelectorAll('.expense-input').forEach(input => {
+                totalGastos += parseCurrency(input.value) || 0;
+            });
+            
+            // CÁLCULO DAS SOBRAS
+            const sobras = totalGanhos - totalInvestido - totalGastos;
+            
+            // Atualizar displays
+            totalGanhosEl.textContent = formatarMoeda(totalGanhos);
+            totalReservasEl.textContent = formatarMoeda(totalInvestido);
+            totalGastosEl.textContent = formatarMoeda(totalGastos);
+            totalSobrasEl.textContent = formatarMoeda(sobras);
+            
+            document.getElementById('valor-total-investido').textContent = formatarMoeda(totalInvestido);
+            document.getElementById('total-investido-mes').textContent = formatarMoeda(totalInvestido);
+            document.getElementById('total-gastos-mes').textContent = formatarMoeda(totalGastos);
+            document.getElementById('sobras-mes').textContent = formatarMoeda(sobras);
+            
+            // Aplicar estilo às sobras (positivo/negativo)
+            if (sobras > 0) {
+                totalSobrasEl.style.color = 'var(--success)';
+                document.getElementById('sobras-mes').style.color = 'var(--success)';
+            } else if (sobras < 0) {
+                totalSobrasEl.style.color = 'var(--danger)';
+                document.getElementById('sobras-mes').style.color = 'var(--danger)';
+            } else {
+                totalSobrasEl.style.color = 'var(--accent)';
+                document.getElementById('sobras-mes').style.color = 'var(--accent)';
+            }
+            
+            salvarDados();
+            calcularAcumuladoAnual();
+            atualizarResumo();
+        }
+        
+        // ATUALIZAR RESUMO (FOLHA DE ROSTO)
+        function atualizarResumo() {
+            const anoAtual = yearSelect.value;
+            const resumoDiv = document.getElementById('resumoInvestimentos');
+            
+            let totalReservaAno = 0;
+            let totalPlanosAno = 0;
+            let totalSonhosAno = 0;
+            let mesesComDados = [];
+            
+            for (let mes = 0; mes < 12; mes++) {
+                const chaveMes = `${anoAtual}-${String(mes + 1).padStart(2, '0')}`;
+                const dadosMes = dadosFinanceiros[chaveMes];
+                
+                if (dadosMes) {
+                    const reserva = parseCurrency(dadosMes['valor-reserva'] || '0,00');
+                    const planos = parseCurrency(dadosMes['valor-etfs'] || '0,00');
+                    const sonhos = parseCurrency(dadosMes['valor-sonhos'] || '0,00');
+                    
+                    if (reserva > 0 || planos > 0 || sonhos > 0) {
+                        mesesComDados.push({
+                            mes: mes,
+                            reserva: reserva,
+                            planos: planos,
+                            sonhos: sonhos,
+                            total: reserva + planos + sonhos
+                        });
+                    }
+                    
+                    totalReservaAno += reserva;
+                    totalPlanosAno += planos;
+                    totalSonhosAno += sonhos;
+                }
+            }
+            
+            const totalGeral = totalReservaAno + totalPlanosAno + totalSonhosAno;
+            
+            let html = '';
+            
+            if (mesesComDados.length === 0) {
+                html = '<p style="text-align:center;color:#718096;padding:20px;">Nenhum investimento registrado neste ano ainda.</p>';
+            } else {
+                // Lista de meses
+                const nomesMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                
+                mesesComDados.forEach(item => {
+                    const nomeMes = nomesMeses[item.mes];
+                    html += `
+                        <div class="folha-rosto-item">
+                            <span class="folha-rosto-label">📅 ${nomeMes}</span>
+                            <span class="folha-rosto-value">${formatarMoeda(item.total)}</span>
+                        </div>
+                        <div style="font-size:0.7rem;color:#718096;padding-left:20px;padding-bottom:8px;border-bottom:1px solid rgba(126,87,194,0.1);">
+                            🛡️ ${formatarMoeda(item.reserva)} | 📈 ${formatarMoeda(item.planos)} | 🌟 ${formatarMoeda(item.sonhos)}
+                        </div>
+                    `;
+                });
+                
+                // Totais do ano
+                html += `
+                    <div class="folha-rosto-total">
+                        <span class="folha-rosto-label">📊 TOTAL INVESTIDO NO ANO</span>
+                        <span class="folha-rosto-value">${formatarMoeda(totalGeral)}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(126,87,194,0.2);">
+                        <div style="text-align:center;">
+                            <div style="font-size:0.7rem;color:#718096;">🛡️ Reserva</div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#4299e1;">${formatarMoeda(totalReservaAno)}</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.7rem;color:#718096;">📈 Planos</div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#48bb78;">${formatarMoeda(totalPlanosAno)}</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.7rem;color:#718096;">🌟 Sonhos</div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#ed8936;">${formatarMoeda(totalSonhosAno)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resumoDiv.innerHTML = html;
+        }
+        
+        function parseCurrency(value) {
+            if (!value || value === '0,00') return 0;
+            return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+        }
+        
+        function formatarMoeda(valor) {
+            return 'R$ ' + valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        function salvarDados() {
+            const mes = `${yearSelect.value}-${String(parseInt(monthSelect.value) + 1).padStart(2, '0')}`;
+            if (!mes) return;
+            
+            // Coletar todos os dados
+            const dados = {};
+            const inputs = document.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                dados[input.id] = input.value;
+            });
+            
+            dadosFinanceiros[mes] = dados;
+            localStorage.setItem('isaMoneyDados', JSON.stringify(dadosFinanceiros));
+            mostrarToast('Dados salvos com sucesso!');
+            atualizarResumo();
+        }
+        
+        // NOVA FUNÇÃO: Salvar metas
+        function salvarMetas() {
+            const anoAtual = yearSelect.value;
+            const metas = {
+                'meta-reserva': document.getElementById('meta-reserva').value,
+                'meta-planos': document.getElementById('meta-planos').value,
+                'meta-sonhos': document.getElementById('meta-sonhos').value
+            };
+            
+            metasFinanceiras[anoAtual] = metas;
+            localStorage.setItem('isaMoneyMetas', JSON.stringify(metasFinanceiras));
+        }
+        
+        // NOVA FUNÇÃO: Carregar metas
+        function carregarMetas() {
+            const anoAtual = yearSelect.value;
+            const metasAno = metasFinanceiras[anoAtual] || {};
+            
+            if (metasAno['meta-reserva']) {
+                document.getElementById('meta-reserva').value = metasAno['meta-reserva'];
+            }
+            if (metasAno['meta-planos']) {
+                document.getElementById('meta-planos').value = metasAno['meta-planos'];
+            }
+            if (metasAno['meta-sonhos']) {
+                document.getElementById('meta-sonhos').value = metasAno['meta-sonhos'];
+            }
+            
+            calcularProgressoMetas();
+        }
+        
+        function carregarDados() {
+            const mes = `${yearSelect.value}-${String(parseInt(monthSelect.value) + 1).padStart(2, '0')}`;
+            if (!mes) return;
+            
+            const dadosMes = dadosFinanceiros[mes] || {};
+            
+            // Preencher campos
+            const inputs = document.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                if (dadosMes[input.id] !== undefined) {
+                    input.value = dadosMes[input.id];
+                } else {
+                    // Se não tiver dados, garantir que fique 0,00 (exceto metas)
+                    if (!input.id.startsWith('meta-')) {
+                        input.value = '0,00';
+                    }
+                }
+            });
+            
+            // Atualizar visibilidade de campos especiais baseado no mês
+            atualizarCamposEspeciais();
+            
+            // Carregar nomes personalizados dos gastos
+            const nomesDoMes = nomesGastos[mes] || GASTOS_PADRAO;
+            document.querySelectorAll('.expense-name').forEach((el, index) => {
+                if (nomesDoMes[index]) {
+                    el.textContent = nomesDoMes[index];
+                }
+            });
+            
+            calcularSugestoes();
+            carregarMetas();
+            calcularAcumuladoAnual();
+            atualizarResumo();
+        }
+        
+        function atualizarCamposEspeciais() {
+            const mes = parseInt(monthSelect.value);
+            
+            // Mostrar/ocultar campos baseado no mês
+            document.getElementById('decimo-terceiro-1').style.display = mes === 10 ? 'flex' : 'none';
+            document.getElementById('decimo-terceiro-2').style.display = mes === 11 ? 'flex' : 'none';
+            document.getElementById('ferias').style.display = mes === 11 ? 'flex' : 'none';
+        }
+        
+        function updateVisibility() {
+            atualizarCamposEspeciais();
+        }
+        
+        function limparMes() {
+            if (confirm('Tem certeza que deseja limpar todos os dados deste mês?')) {
+                const inputs = document.querySelectorAll('input[type="text"]');
+                inputs.forEach(input => {
+                    // Não limpar as metas
+                    if (!input.id.startsWith('meta-')) {
+                        input.value = '0,00';
+                    }
+                });
+                calcularSugestoes();
+                salvarDados();
+                atualizarResumo();
+            }
+        }
+        
+        function mostrarToast(mensagem = 'Dados salvos com sucesso!') {
+            notification.textContent = mensagem;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+        
+        function formatarInputMoeda(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value === '') {
+                e.target.value = '0,00';
+                return;
+            }
+            
+            value = (parseInt(value) / 100).toFixed(2);
+            value = value.replace('.', ',');
+            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            e.target.value = value;
+            
+            // Recalcular após formatação
+            setTimeout(() => {
+                if (e.target.id === 'pagamento-dia5' || e.target.id === 'vale-dia20') {
+                    calcularSugestoes();
+                } else if (e.target.id.startsWith('meta-')) {
+                    calcularProgressoMetas();
+                } else {
+                    calcularTotais();
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>
